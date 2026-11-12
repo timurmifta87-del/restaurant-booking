@@ -15,6 +15,7 @@ class TableResource extends JsonResource
             'seats' => $this->seats,
             'is_active' => $this->is_active,
             'hall' => new HallResource($this->whenLoaded('hall')),
+            'bookings' => BookingResource::collection($this->whenLoaded('bookings')),
         ];
     }
 }

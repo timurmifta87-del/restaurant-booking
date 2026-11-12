@@ -14,6 +14,7 @@ class HallResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'is_active' => $this->is_active,
+            'tables_count' => $this->whenCounted('tables'),
             'tables' => TableResource::collection($this->whenLoaded('tables')),
         ];
     }

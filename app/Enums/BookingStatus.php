@@ -16,4 +16,10 @@ enum BookingStatus: string
             self::Cancelled => 'Отменена',
         };
     }
+
+    /** Статусы, при которых столик считается занятым */
+    public static function active(): array
+    {
+        return [self::New->value, self::Confirmed->value];
+    }
 }

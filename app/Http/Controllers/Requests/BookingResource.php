@@ -20,6 +20,11 @@ class BookingResource extends JsonResource
             'user' => new UserResource($this->whenLoaded('user')),
             'table' => new TableResource($this->whenLoaded('table')),
             'dishes' => DishResource::collection($this->whenLoaded('dishes')),
+            // сумма предзаказа считается из загруженных блюд
+            'preorder_total' => $this->whenLoaded('dishes', fn () => round(
+                $this->dishes->sum(fn ($dish) => $dish->pivot->quantity * $dish->pivot->price),
+                2
+            )),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
