@@ -22,6 +22,7 @@ class StoreBookingRequest extends FormRequest
             'dishes' => ['nullable', 'array'],
             'dishes.*.dish_id' => ['required', 'integer', 'distinct', 'exists:dishes,id'],
             'dishes.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
+            'user_id' => ['sometimes', 'integer', 'exists:users,id'],
         ];
     }
 
