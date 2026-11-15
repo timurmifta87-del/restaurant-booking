@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Models\Dish;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class DishService
 {
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = []): LengthAwarePaginator
     {
         $sort = in_array($filters['sort'] ?? null, ['name', 'price'], true)
             ? $filters['sort']
@@ -34,7 +35,8 @@ class DishService
                 )
             )
             ->orderBy($sort, $direction)
-            ->paginate($perPage);
+            ->paginate(max(1, min((int) ($filters['per_page'] ?? 15), 100)))
+            ->withQueryString();
     }
 
     public function create(array $data): Dish
@@ -66,7 +68,7 @@ class DishService
     public function delete(Dish $dish): void
     {
         if ($dish->bookings()->exists()) {
-            abort(409, 'Нельзя удалить блюдо, которое есть в предзаказах. Отключите его в меню.');
+            throw new BusinessException('Нельзя удалить блюдо, которое есть в предзаказах. Отключите его в меню.');
         }
 
         if ($dish->image_path) {

@@ -23,7 +23,7 @@ class DishController extends Controller
     {
         return DishResource::collection(
             $this->dishes->paginate(
-                $request->only(['menu_category_id', 'search', 'is_available', 'sort', 'direction'])
+                $request->only(['menu_category_id', 'search', 'is_available', 'sort', 'direction', 'per_page'])
             )
         );
     }
