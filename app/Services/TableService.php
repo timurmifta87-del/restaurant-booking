@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Enums\BookingStatus;
 use App\Models\Table;
 use Carbon\Carbon;
@@ -36,7 +37,7 @@ class TableService
     public function delete(Table $table): void
     {
         if ($table->bookings()->exists()) {
-            abort(409, 'Нельзя удалить столик, для которого есть брони.');
+            throw new BusinessException('Нельзя удалить столик, для которого есть брони.');
         }
 
         $table->delete();

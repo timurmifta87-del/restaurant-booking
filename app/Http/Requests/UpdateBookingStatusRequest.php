@@ -16,10 +16,7 @@ class UpdateBookingStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => [
-                'required',
-                Rule::in([BookingStatus::Confirmed->value, BookingStatus::Cancelled->value]),
-            ],
+            'status' => ['required', Rule::enum(BookingStatus::class)],
         ];
     }
 
@@ -27,7 +24,7 @@ class UpdateBookingStatusRequest extends FormRequest
     {
         return [
             'status.required' => 'Укажите новый статус брони.',
-            'status.in' => 'Статус может быть только confirmed или cancelled.',
+            'status.enum' => 'Статус может быть: new, confirmed, completed, cancelled.',
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Enums\BookingStatus;
 use App\Models\Hall;
 use Illuminate\Database\Eloquent\Collection;
@@ -39,7 +40,7 @@ class HallService
     public function delete(Hall $hall): void
     {
         if ($hall->tables()->exists()) {
-            abort(409, 'Нельзя удалить зал, в котором есть столики.');
+            throw new BusinessException('Нельзя удалить зал, в котором есть столики.');
         }
 
         $hall->delete();

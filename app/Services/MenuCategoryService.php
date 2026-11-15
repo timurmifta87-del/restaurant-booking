@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessException;
 use App\Models\MenuCategory;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -30,7 +31,7 @@ class MenuCategoryService
     public function delete(MenuCategory $category): void
     {
         if ($category->dishes()->exists()) {
-            abort(409, 'Нельзя удалить категорию, в которой есть блюда.');
+            throw new BusinessException('Нельзя удалить категорию, в которой есть блюда.');
         }
 
         $category->delete();
