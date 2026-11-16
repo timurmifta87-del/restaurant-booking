@@ -17,7 +17,7 @@ class DishFactory extends Factory
             'menu_category_id' => MenuCategory::factory(),
             'name' => fake()->unique()->words(2, true),
             'description' => fake()->sentence(),
-            'price' => fake()->randomFloat(2, 150, 2500),
+            'price' => fake()->numberBetween(8, 150) * 100, // цена в тенге
             'image_path' => null,
             'is_available' => true,
         ];
