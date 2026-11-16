@@ -1,58 +1,113 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Бронирование столиков в ресторане — REST API на Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Серверная часть (Laravel 13, Sanctum) и веб-клиент (HTML + JavaScript) для бронирования столиков с предзаказом блюд.
 
-## About Laravel
+Автор: Мифтахутдинов Тимур
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Возможности
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- регистрация и вход по токену Sanctum, роли «клиент» и «администратор»;
+- каталог: категории меню, блюда (с фото), залы, столики;
+- поиск свободных столиков на время и бронирование с предзаказом блюд;
+- отмена брони клиентом, смена статуса администратором;
+- фильтрация, поиск, сортировка и пагинация списка броней;
+- статистика для администратора;
+- журнал всех запросов к API.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Запуск сервера
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan storage:link
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+API: `http://127.0.0.1:8000/api`
 
-## Contributing
+В `.env` укажите адрес клиента для CORS: `CLIENT_URL=http://127.0.0.1:5500`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Запуск клиента
 
-## Code of Conduct
+Во втором окне терминала из корня проекта:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```
+php -S 127.0.0.1:5500 -t client
+```
 
-## Security Vulnerabilities
+Клиент: `http://127.0.0.1:5500/login.html`. Адрес API задаётся в `client/js/config.js`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Тестовые учётные записи
 
-## License
+| Роль | Email | Пароль |
+|---|---|---|
+| Администратор | admin@resto.test | password |
+| Клиент | client@resto.test | password |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Тесты
+
+```
+php artisan test
+```
+
+Тесты используют SQLite в памяти (`phpunit.xml`) и трейт `RefreshDatabase`.
+
+## Документация API
+
+Коллекция Bruno в папке `bruno/`: у каждого запроса есть описание (вкладка Docs), требуемая роль, пример тела и коды ответов. Окружение `local` содержит переменные `baseUrl` и `token`; токен сохраняется автоматически после входа.
+
+## Эндпоинты
+
+Гость — без токена; Клиент — любой вошедший пользователь; Админ — роль admin.
+
+| Метод | URL | Доступ | Описание | Коды |
+|---|---|---|---|---|
+| POST | /api/register | Гость | Регистрация, роль client | 201, 422 |
+| POST | /api/login | Гость | Вход, выдача токена | 200, 401, 422 |
+| POST | /api/logout | Клиент | Удаление текущего токена | 200, 401 |
+| GET | /api/user | Клиент | Текущий пользователь | 200, 401 |
+| GET | /api/v1/menu-categories | Все | Категории с доступными блюдами | 200 |
+| GET | /api/v1/menu-categories/{id} | Все | Категория | 200, 404 |
+| POST, PUT, DELETE | /api/v1/menu-categories… | Админ | Управление категориями | 201, 200, 204, 403, 409, 422 |
+| GET | /api/v1/dishes | Все | Блюда: menu_category_id, search, is_available, sort, direction, per_page | 200 |
+| GET | /api/v1/dishes/{id} | Все | Блюдо | 200, 404 |
+| POST, PUT, DELETE | /api/v1/dishes… | Админ | Управление блюдами, загрузка фото | 201, 200, 204, 403, 409, 422 |
+| PATCH | /api/v1/dishes/{id}/availability | Админ | Включить или выключить блюдо | 200, 403 |
+| GET | /api/v1/halls | Все | Залы с количеством столиков | 200 |
+| GET | /api/v1/halls/{id} | Все | Зал | 200, 404 |
+| GET | /api/v1/halls/{id}/tables | Все | Столики зала | 200, 404 |
+| POST, PUT, DELETE | /api/v1/halls… | Админ | Управление залами | 201, 200, 204, 403, 409, 422 |
+| GET | /api/v1/halls/{id}/occupancy?date= | Админ | Занятость зала на день | 200, 403, 422 |
+| GET | /api/v1/tables | Все | Столики: hall_id, min_seats | 200 |
+| GET | /api/v1/tables/available | Все | Свободные столики: starts_at, ends_at, guests_count, hall_id | 200, 422 |
+| POST, PUT, DELETE | /api/v1/tables… | Админ | Управление столиками | 201, 200, 204, 403, 409, 422 |
+| GET | /api/v1/bookings | Клиент | Брони (клиент видит свои): status, hall_id, date_from, date_to, search, sort, order, per_page | 200, 401, 422 |
+| GET | /api/v1/bookings/{id} | Владелец, Админ | Бронь с предзаказом | 200, 401, 403, 404 |
+| POST | /api/v1/bookings | Клиент | Создать бронь с предзаказом | 201, 401, 409, 422 |
+| POST | /api/v1/bookings/{id}/cancel | Владелец, Админ | Отменить бронь | 200, 403, 409 |
+| PATCH | /api/v1/bookings/{id}/status | Админ | Сменить статус | 200, 403, 409, 422 |
+| POST | /api/v1/bookings/{id}/dishes | Владелец, Админ | Добавить блюдо в предзаказ | 201, 403, 409, 422 |
+| DELETE | /api/v1/bookings/{id}/dishes/{dish} | Владелец, Админ | Убрать блюдо из предзаказа | 204, 403, 404, 409 |
+| GET | /api/v1/stats?date_from=&date_to= | Админ | Статистика броней | 200, 403, 422 |
+
+## Бизнес-правила
+
+Нарушение правила возвращает код 409 и сообщение в поле `message` (класс `App\Exceptions\BusinessException`).
+
+1. Нельзя забронировать столик, занятый на пересекающееся время.
+2. Количество гостей не может превышать число мест за столиком.
+3. Нельзя бронировать неработающий столик.
+4. Бронь не длиннее 4 часов.
+5. У клиента не больше 3 активных будущих броней.
+6. Клиент может отменить бронь не позднее чем за 2 часа до начала.
+7. Статус меняется только по допустимым переходам (описаны в `App\Enums\BookingStatus`): новая → подтверждена → завершена; новая или подтверждённая → отменена.
+8. Нельзя добавить в предзаказ недоступное блюдо или изменить предзаказ отменённой брони.
+9. Нельзя удалить зал со столиками, столик с бронями, категорию с блюдами, блюдо из предзаказов.
+
+Бронь создаётся в транзакции `DB::transaction()` с блокировкой столика `lockForUpdate()`: если блюдо предзаказа недоступно, бронь не сохраняется.
+
+## Журнал
+
+`App\Http\Middleware\LogApiRequests` пишет в `storage/logs/laravel.log` каждый запрос: метод, URL, id пользователя, код ответа, время выполнения. Тело запроса и заголовки не пишутся, поэтому пароли и токены в журнал не попадают. События бизнес-логики (создание брони, смена статуса, нарушения правил, вход) записываются через `Log::info` и `Log::warning`.
