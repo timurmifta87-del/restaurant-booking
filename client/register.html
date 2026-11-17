@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Регистрация — Ресторан</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+</head>
+<body>
+<header id="header"></header>
+<main>
+    <div class="card narrow">
+        <h1>Регистрация</h1>
+        <div id="notice" hidden></div>
+        <form id="form" novalidate>
+            <div class="field">
+                <label for="name">Имя</label>
+                <input id="name" name="name" required>
+                <small class="field-error" data-for="name"></small>
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required>
+                <small class="field-error" data-for="email"></small>
+            </div>
+            <div class="field">
+                <label for="phone">Телефон</label>
+                <input id="phone" name="phone">
+                <small class="field-error" data-for="phone"></small>
+            </div>
+            <div class="field">
+                <label for="password">Пароль (не короче 8 символов)</label>
+                <input id="password" name="password" type="password" required>
+                <small class="field-error" data-for="password"></small>
+            </div>
+            <div class="field">
+                <label for="password_confirmation">Повторите пароль</label>
+                <input id="password_confirmation" name="password_confirmation" type="password" required>
+                <small class="field-error" data-for="password_confirmation"></small>
+            </div>
+            <div class="row">
+                <button type="submit">Зарегистрироваться</button>
+                <span class="spacer"></span>
+                <a href="login.html">Уже есть аккаунт</a>
+            </div>
+        </form>
+    </div>
+</main>
+<script>
+    initLayout({ requireAuth: false });
+    const form = $('#form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearNotice();
+        if (!checkRequired(form)) return;
+        try {
+            const res = await api('/register', {
+                method: 'POST',
+                body: Object.fromEntries(new FormData(form)),
+            });
+            auth.save(res.token, res.user);
+            location.href = 'index.html';
+        } catch (error) {
+            handleError(error, form);
+        }
+    });
+</script>
+</body>
+</html>
