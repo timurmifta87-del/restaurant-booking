@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Бронирование — Ресторан</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+</head>
+<body>
+<header id="header"></header>
+<main>
+    <h1>Забронировать столик</h1>
+    <div id="notice" hidden></div>
+
+    <form id="form" novalidate>
+        <div class="card">
+            <h2>1. Дата, время и гости</h2>
+            <div class="filters">
+                <div>
+                    <label for="date">Дата</label>
+                    <input id="date" name="date" type="date" required>
+                    <small class="field-error" data-for="date"></small>
+                </div>
+                <div>
+                    <label for="time">Время начала</label>
+                    <input id="time" name="time" type="time" value="19:00" step="1800" required>
+                    <small class="field-error" data-for="starts_at"></small>
+                </div>
+                <div>
+                    <label for="hours">Длительность</label>
+                    <select id="hours" name="hours">
+                        <option value="1">1 час</option><option value="2" selected>2 часа</option>
+                        <option value="3">3 часа</option><option value="4">4 часа</option>
+                        <option value="5">5 часов</option>
+                    </select>
+                    <small class="field-error" data-for="ends_at"></small>
+                </div>
+                <div>
+                    <label for="guests_count">Гостей</label>
+                    <input id="guests_count" name="guests_count" type="number" min="1" value="2" required>
+                    <small class="field-error" data-for="guests_count"></small>
+                </div>
+                <div>
+                    <label for="hall_id">Зал</label>
+                    <select id="hall_id" name="hall_id"><option value="">Любой</option></select>
+                </div>
+                <div><button type="button" id="find">Найти свободные столики</button></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>2. Столик</h2>
+            <div class="row">
+                <label style="margin:0"><input type="checkbox" id="all-tables" style="width:auto"> показать все столики (в том числе занятые)</label>
+            </div>
+            <div id="tables" class="tables-list muted">Сначала выберите дату и нажмите «Найти».</div>
+            <small class="field-error" data-for="table_id"></small>
+        </div>
+
+        <div class="card">
+            <h2>3. Предзаказ блюд (необязательно)</h2>
+            <div id="menu" class="muted">Загрузка меню…</div>
+            <small class="field-error" data-for="dishes"></small>
+        </div>
+
+        <div class="card">
+            <h2>4. Комментарий</h2>
+            <textarea name="comment" rows="2" placeholder="Например: у окна, день рождения"></textarea>
+            <small class="field-error" data-for="comment"></small>
+            <p><b id="total">Предзаказ: 0 ₸</b></p>
+            <button type="submit">Забронировать</button>
+        </div>
+    </form>
+</main>
+<script>
+    const form = $('#form');
+    let tableId = null;
+
+    function period() {
+        const start = `${form.date.value} ${form.time.value}:00`;
+        const end = new Date(`${form.date.value}T${form.time.value}:00`);
+        end.setHours(end.getHours() + Number(form.hours.value));
+        const pad = (n) => String(n).padStart(2, '0');
+        const endStr = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())} ${pad(end.getHours())}:${pad(end.getMinutes())}:00`;
+        return { starts_at: start, ends_at: endStr };
+    }
+
+    function renderTables(tables) {
+        tableId = null;
+        $('#tables').className = 'tables-list';
+        $('#tables').innerHTML = tables.length
+            ? tables.map((t) => `
+                <div class="table-option" data-id="${t.id}">
+                    <b>Столик №${t.number}</b><br>
+                    <span class="muted">${escapeHtml(t.hall?.name)} · мест: ${t.seats}</span>
+                </div>`).join('')
+            : '<span class="muted">Свободных столиков нет. Попробуйте другое время.</span>';
+        document.querySelectorAll('.table-option').forEach((el) => el.onclick = () => {
+            document.querySelectorAll('.table-option').forEach((x) => x.classList.remove('selected'));
+            el.classList.add('selected');
+            tableId = Number(el.dataset.id);
+        });
+    }
+
+    $('#find').onclick = async () => {
+        clearNotice();
+        if (!checkRequired(form)) return;
+        try {
+            if ($('#all-tables').checked) {
+                const res = await api('/v1/tables', { query: { hall_id: form.hall_id.value, per_page: 100 } });
+                renderTables(res.data);
+            } else {
+                const res = await api('/v1/tables/available', {
+                    query: { ...period(), guests_count: form.guests_count.value, hall_id: form.hall_id.value },
+                });
+                renderTables(res.data);
+            }
+        } catch (error) { handleError(error, form); }
+    };
+
+    function updateTotal() {
+        let sum = 0;
+        document.querySelectorAll('[data-dish]').forEach((input) => {
+            sum += Number(input.value || 0) * Number(input.dataset.price);
+        });
+        $('#total').textContent = `Предзаказ: ${formatMoney(sum)}`;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearNotice();
+        if (!checkRequired(form)) return;
+        if (!tableId) {
+            showFieldErrors(form, { table_id: ['Выберите столик.'] });
+            return;
+        }
+        const dishes = [...document.querySelectorAll('[data-dish]')]
+            .filter((input) => Number(input.value) > 0)
+            .map((input) => ({ dish_id: Number(input.dataset.dish), quantity: Number(input.value) }));
+        try {
+            const res = await api('/v1/bookings', {
+                method: 'POST',
+                body: {
+                    table_id: tableId,
+                    ...period(),
+                    guests_count: Number(form.guests_count.value),
+                    comment: form.comment.value || null,
+                    dishes,
+                },
+            });
+            location.href = `booking.html?id=${res.data.id}`;
+        } catch (error) {
+            // 409 — нарушение бизнес-правила: показываем сообщение сервера
+            handleError(error, form);
+        }
+    });
+
+    (async () => {
+        if (!(await initLayout())) return;
+        const tomorrow = new Date(Date.now() + 86400000);
+        form.date.value = tomorrow.toISOString().slice(0, 10);
+
+        const halls = await api('/v1/halls');
+        $('#hall_id').insertAdjacentHTML('beforeend',
+            halls.data.filter((h) => h.is_active).map((h) => `<option value="${h.id}">${escapeHtml(h.name)}</option>`).join(''));
+
+        const menu = (await api('/v1/menu-categories')).data;
+        $('#menu').className = '';
+        $('#menu').innerHTML = menu.map((c) => `
+            <h3>${escapeHtml(c.name)}</h3>
+            <table>${(c.dishes || []).map((d) => `
+                <tr>
+                    <td>${escapeHtml(d.name)}<br><span class="muted">${escapeHtml(d.description)}</span></td>
+                    <td>${formatMoney(d.price)}</td>
+                    <td style="width:110px"><input type="number" min="0" max="50" value="0" data-dish="${d.id}" data-price="${d.price}"></td>
+                </tr>`).join('')}
+            </table>`).join('');
+        document.querySelectorAll('[data-dish]').forEach((input) => input.oninput = updateTotal);
+    })();
+</script>
+</body>
+</html>

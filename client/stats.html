@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Статистика — Ресторан</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+</head>
+<body>
+<header id="header"></header>
+<main>
+    <h1>Статистика броней</h1>
+    <div id="notice" hidden></div>
+    <form id="filters" class="card filters">
+        <div><label for="date_from">Дата с</label><input id="date_from" name="date_from" type="date"></div>
+        <div><label for="date_to">Дата по</label><input id="date_to" name="date_to" type="date"></div>
+        <div class="row"><button type="submit">Показать</button></div>
+    </form>
+    <div id="content"></div>
+</main>
+<script>
+    const form = $('#filters');
+
+    async function load() {
+        try {
+            const s = (await api('/v1/stats', { query: Object.fromEntries(new FormData(form)) })).data;
+            $('#content').innerHTML = `
+                <div class="grid-2">
+                    <div class="card">
+                        <h2>Брони по статусам · всего ${s.bookings_total}</h2>
+                        <table>${s.by_status.map((r) => `
+                            <tr><td><span class="badge badge-${r.status}">${escapeHtml(r.label)}</span></td><td><b>${r.total}</b></td></tr>`).join('')}
+                        </table>
+                    </div>
+                    <div class="card">
+                        <h2>Сумма предзаказов</h2>
+                        <p style="font-size:28px;margin:8px 0"><b>${formatMoney(s.preorder_revenue)}</b></p>
+                        <p class="muted">без отменённых броней</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Популярные блюда</h2>
+                    <table>
+                        <thead><tr><th>Блюдо</th><th>Порций</th><th>Сумма</th></tr></thead>
+                        ${s.top_dishes.map((d) => `<tr><td>${escapeHtml(d.name)}</td><td>${d.portions}</td><td>${formatMoney(d.revenue)}</td></tr>`).join('')
+                            || '<tr><td colspan="3" class="muted">Нет данных</td></tr>'}
+                    </table>
+                </div>
+                <div class="card">
+                    <h2>Загрузка залов (активные брони)</h2>
+                    <table>
+                        <thead><tr><th>Зал</th><th>Столиков</th><th>Броней</th></tr></thead>
+                        ${s.halls.map((h) => `<tr><td>${escapeHtml(h.name)}</td><td>${h.tables_count}</td><td>${h.bookings_count}</td></tr>`).join('')}
+                    </table>
+                </div>`;
+        } catch (error) { handleError(error, form); }
+    }
+
+    form.addEventListener('submit', (e) => { e.preventDefault(); clearNotice(); load(); });
+
+    (async () => {
+        if (!(await initLayout({ adminOnly: true }))) return;
+        load();
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Меню — Ресторан</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+</head>
+<body>
+<header id="header"></header>
+<main>
+    <div class="row">
+        <h1>Меню</h1>
+        <span class="spacer"></span>
+        <button id="add" class="admin-only">+ Добавить блюдо</button>
+    </div>
+    <div id="notice" hidden></div>
+
+    <form id="dish-form" class="card admin-only" hidden novalidate>
+        <h2 id="form-title">Новое блюдо</h2>
+        <div class="grid-2">
+            <div>
+                <div class="field">
+                    <label for="f-name">Название</label>
+                    <input id="f-name" name="name" required>
+                    <small class="field-error" data-for="name"></small>
+                </div>
+                <div class="field">
+                    <label for="f-category">Категория</label>
+                    <select id="f-category" name="menu_category_id" required></select>
+                    <small class="field-error" data-for="menu_category_id"></small>
+                </div>
+                <div class="field">
+                    <label for="f-price">Цена, ₸</label>
+                    <input id="f-price" name="price" type="number" step="0.01" min="0.01" required>
+                    <small class="field-error" data-for="price"></small>
+                </div>
+            </div>
+            <div>
+                <div class="field">
+                    <label for="f-description">Описание</label>
+                    <textarea id="f-description" name="description" rows="3"></textarea>
+                    <small class="field-error" data-for="description"></small>
+                </div>
+                <div class="field">
+                    <label for="f-image">Фото (jpg, png, до 2 МБ)</label>
+                    <input id="f-image" name="image" type="file" accept="image/*">
+                    <small class="field-error" data-for="image"></small>
+                    <img id="f-preview" class="dish-img" hidden alt="">
+                </div>
+                <div class="field">
+                    <label><input type="checkbox" name="is_available" checked style="width:auto"> Доступно для заказа</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <button type="submit">Сохранить</button>
+            <button type="button" id="cancel-form" class="secondary">Отмена</button>
+        </div>
+    </form>
+
+    <form id="filters" class="card filters">
+        <div>
+            <label for="search">Поиск по названию</label>
+            <input id="search" name="search">
+        </div>
+        <div>
+            <label for="menu_category_id">Категория</label>
+            <select id="menu_category_id" name="menu_category_id"><option value="">Все</option></select>
+        </div>
+        <div>
+            <label for="is_available">Наличие</label>
+            <select id="is_available" name="is_available">
+                <option value="">Все</option><option value="1">Доступно</option><option value="0">Нет в наличии</option>
+            </select>
+        </div>
+        <div>
+            <label for="sort">Сортировка</label>
+            <select id="sort" name="sort">
+                <option value="id">По умолчанию</option><option value="name">По названию</option><option value="price">По цене</option>
+            </select>
+        </div>
+        <div>
+            <label for="direction">Порядок</label>
+            <select id="direction" name="direction">
+                <option value="asc">По возрастанию</option><option value="desc">По убыванию</option>
+            </select>
+        </div>
+        <div>
+            <label for="per_page">На странице</label>
+            <select id="per_page" name="per_page"><option>5</option><option selected>10</option><option>20</option></select>
+        </div>
+        <div class="row"><button type="submit">Применить</button></div>
+    </form>
+
+    <table>
+        <thead><tr><th></th><th>Блюдо</th><th>Категория</th><th>Цена</th><th>Наличие</th><th class="admin-only"></th></tr></thead>
+        <tbody id="rows"></tbody>
+    </table>
+    <div id="pagination" class="pagination"></div>
+</main>
+<script>
+    const filters = $('#filters');
+    const dishForm = $('#dish-form');
+    let page = 1;
+    let editingId = null;
+    let dishes = [];
+
+    async function load() {
+        try {
+            const res = await api('/v1/dishes', { query: { ...Object.fromEntries(new FormData(filters)), page } });
+            dishes = res.data;
+            $('#rows').innerHTML = dishes.length ? dishes.map((d) => `
+                <tr>
+                    <td>${d.image_url ? `<img class="dish-img" src="${escapeHtml(new URL(d.image_url, API_URL).href)}" alt="">` : '<div class="dish-img"></div>'}</td>
+                    <td><b>${escapeHtml(d.name)}</b><br><span class="muted">${escapeHtml(d.description)}</span></td>
+                    <td>${escapeHtml(d.category?.name)}</td>
+                    <td>${formatMoney(d.price)}</td>
+                    <td>${d.is_available ? 'В наличии' : '<span class="muted">Нет в наличии</span>'}</td>
+                    <td class="admin-only">
+                        <div class="row">
+                            <button class="small secondary" data-edit="${d.id}">Изменить</button>
+                            <button class="small secondary" data-toggle="${d.id}">${d.is_available ? 'Скрыть' : 'Вернуть'}</button>
+                            <button class="small danger" data-delete="${d.id}">Удалить</button>
+                        </div>
+                    </td>
+                </tr>`).join('') : '<tr><td colspan="6" class="muted">Ничего не найдено</td></tr>';
+            renderPagination($('#pagination'), res.meta, (p) => { page = p; load(); });
+            bindRows();
+        } catch (error) { handleError(error, filters); }
+    }
+
+    function bindRows() {
+        document.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openForm(dishes.find((d) => d.id == b.dataset.edit)));
+        document.querySelectorAll('[data-toggle]').forEach((b) => b.onclick = async () => {
+            try { await api(`/v1/dishes/${b.dataset.toggle}/availability`, { method: 'PATCH' }); load(); }
+            catch (error) { handleError(error); }
+        });
+        document.querySelectorAll('[data-delete]').forEach((b) => b.onclick = async () => {
+            const dish = dishes.find((d) => d.id == b.dataset.delete);
+            if (!confirm(`Удалить блюдо «${dish.name}»?`)) return;
+            try {
+                await api(`/v1/dishes/${dish.id}`, { method: 'DELETE' });
+                notify('Блюдо удалено', 'success');
+                load();
+            } catch (error) { handleError(error); }
+        });
+    }
+
+    function openForm(dish = null) {
+        editingId = dish?.id ?? null;
+        dishForm.reset();
+        clearFieldErrors(dishForm);
+        $('#form-title').textContent = dish ? `Изменить: ${dish.name}` : 'Новое блюдо';
+        $('#f-preview').hidden = !dish?.image_url;
+        if (dish) {
+            dishForm.name.value = dish.name;
+            dishForm.menu_category_id.value = dish.category?.id ?? '';
+            dishForm.price.value = dish.price;
+            dishForm.description.value = dish.description ?? '';
+            dishForm.is_available.checked = dish.is_available;
+            if (dish.image_url) $('#f-preview').src = new URL(dish.image_url, API_URL).href;
+        }
+        dishForm.hidden = false;
+        dishForm.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    $('#add').onclick = () => openForm();
+    $('#cancel-form').onclick = () => { dishForm.hidden = true; };
+    $('#f-image').onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) { $('#f-preview').src = URL.createObjectURL(file); $('#f-preview').hidden = false; }
+    };
+
+    dishForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearNotice();
+        if (!checkRequired(dishForm)) return;
+
+        // FormData: можно передать файл. Для изменения — POST с _method=PUT
+        const data = new FormData();
+        data.append('name', dishForm.name.value);
+        data.append('menu_category_id', dishForm.menu_category_id.value);
+        data.append('price', dishForm.price.value);
+        data.append('description', dishForm.description.value);
+        data.append('is_available', dishForm.is_available.checked ? '1' : '0');
+        if (dishForm.image.files[0]) data.append('image', dishForm.image.files[0]);
+        if (editingId) data.append('_method', 'PUT');
+
+        try {
+            await api(editingId ? `/v1/dishes/${editingId}` : '/v1/dishes', { method: 'POST', body: data });
+            dishForm.hidden = true;
+            notify(editingId ? 'Блюдо сохранено' : 'Блюдо добавлено', 'success');
+            load();
+        } catch (error) { handleError(error, dishForm); }
+    });
+
+    filters.addEventListener('submit', (e) => { e.preventDefault(); page = 1; load(); });
+
+    (async () => {
+        await initLayout({ requireAuth: false });
+        const categories = (await api('/v1/menu-categories')).data;
+        const options = categories.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+        $('#menu_category_id').insertAdjacentHTML('beforeend', options);
+        $('#f-category').innerHTML = '<option value="">Выберите категорию</option>' + options;
+        load();
+    })();
+</script>
+</body>
+</html>

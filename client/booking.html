@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Бронь — Ресторан</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+</head>
+<body>
+<header id="header"></header>
+<main>
+    <p><a href="index.html">← К списку броней</a></p>
+    <div id="notice" hidden></div>
+    <div id="content" class="muted">Загрузка…</div>
+</main>
+<script>
+    const id = new URLSearchParams(location.search).get('id');
+    let booking = null;
+    let menu = [];
+
+    function render() {
+        const b = booking;
+        const editable = ['new', 'confirmed'].includes(b.status);
+        $('#content').className = '';
+        $('#content').innerHTML = `
+            <div class="card">
+                <div class="row">
+                    <h1>Бронь №${b.id}</h1>
+                    <span class="badge badge-${b.status}">${escapeHtml(b.status_label)}</span>
+                    <span class="spacer"></span>
+                    ${editable ? '<button id="cancel" class="danger">Отменить бронь</button>' : ''}
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <p><span class="muted">Начало:</span> ${formatDate(b.starts_at)}</p>
+                        <p><span class="muted">Окончание:</span> ${formatDate(b.ends_at)}</p>
+                        <p><span class="muted">Гостей:</span> ${b.guests_count}</p>
+                        <p><span class="muted">Комментарий:</span> ${escapeHtml(b.comment) || '—'}</p>
+                    </div>
+                    <div>
+                        <p><span class="muted">Зал:</span> ${escapeHtml(b.table.hall?.name)}</p>
+                        <p><span class="muted">Столик:</span> №${b.table.number}, мест: ${b.table.seats}</p>
+                        <p><span class="muted">Гость:</span> ${escapeHtml(b.user?.name)} (${escapeHtml(b.user?.email)})</p>
+                        <p><span class="muted">Создана:</span> ${formatDate(b.created_at)}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card admin-only">
+                <h2>Статус (администратор)</h2>
+                <div class="row">
+                    <select id="new-status" style="max-width:220px">
+                        <option value="new">Новая</option>
+                        <option value="confirmed">Подтверждена</option>
+                        <option value="completed">Завершена</option>
+                        <option value="cancelled">Отменена</option>
+                    </select>
+                    <button id="save-status">Сменить статус</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Предзаказ</h2>
+                <table>
+                    <thead><tr><th>Блюдо</th><th>Цена</th><th>Кол-во</th><th>Сумма</th><th></th></tr></thead>
+                    <tbody>
+                    ${b.dishes.length ? b.dishes.map((d) => `
+                        <tr>
+                            <td>${escapeHtml(d.name)}</td>
+                            <td>${formatMoney(d.order_price)}</td>
+                            <td>${d.quantity}</td>
+                            <td>${formatMoney(d.order_price * d.quantity)}</td>
+                            <td>${editable ? `<button class="small secondary" data-remove="${d.id}">Убрать</button>` : ''}</td>
+                        </tr>`).join('') : '<tr><td colspan="5" class="muted">Блюд нет</td></tr>'}
+                    </tbody>
+                </table>
+                <p><b>Итого: ${formatMoney(b.preorder_total || 0)}</b></p>
+                ${editable ? `
+                <form id="add-dish" class="row" novalidate>
+                    <div style="flex:2">
+                        <select name="dish_id" required>
+                            <option value="">Выберите блюдо</option>
+                            ${menu.map((c) => `<optgroup label="${escapeHtml(c.name)}">
+                                ${(c.dishes || []).map((d) => `<option value="${d.id}">${escapeHtml(d.name)} — ${formatMoney(d.price)}</option>`).join('')}
+                            </optgroup>`).join('')}
+                        </select>
+                        <small class="field-error" data-for="dish_id"></small>
+                    </div>
+                    <div style="flex:1">
+                        <input name="quantity" type="number" min="1" max="50" value="1" required>
+                        <small class="field-error" data-for="quantity"></small>
+                    </div>
+                    <div><button type="submit">Добавить</button><small class="field-error"></small></div>
+                </form>` : ''}
+            </div>`;
+
+        const status = $('#new-status');
+        if (status) status.value = b.status;
+        bind();
+    }
+
+    function bind() {
+        const cancel = $('#cancel');
+        if (cancel) cancel.onclick = async () => {
+            if (!confirm('Отменить бронь?')) return;
+            try {
+                booking = (await api(`/v1/bookings/${id}/cancel`, { method: 'POST' })).data;
+                render();
+                notify('Бронь отменена', 'success');
+            } catch (error) { handleError(error); }
+        };
+
+        $('#save-status').onclick = async () => {
+            try {
+                booking = (await api(`/v1/bookings/${id}/status`, {
+                    method: 'PATCH', body: { status: $('#new-status').value },
+                })).data;
+                render();
+                notify('Статус изменён', 'success');
+            } catch (error) { handleError(error); }
+        };
+
+        document.querySelectorAll('[data-remove]').forEach((btn) => btn.onclick = async () => {
+            if (!confirm('Убрать блюдо из предзаказа?')) return;
+            try {
+                await api(`/v1/bookings/${id}/dishes/${btn.dataset.remove}`, { method: 'DELETE' });
+                await reload();
+                notify('Блюдо убрано', 'success');
+            } catch (error) { handleError(error); }
+        });
+
+        const form = $('#add-dish');
+        if (form) form.onsubmit = async (e) => {
+            e.preventDefault();
+            clearNotice();
+            if (!checkRequired(form)) return;
+            try {
+                booking = (await api(`/v1/bookings/${id}/dishes`, {
+                    method: 'POST',
+                    body: { dish_id: Number(form.dish_id.value), quantity: Number(form.quantity.value) },
+                })).data;
+                render();
+                notify('Блюдо добавлено', 'success');
+            } catch (error) { handleError(error, form); }
+        };
+    }
+
+    async function reload() {
+        booking = (await api(`/v1/bookings/${id}`)).data;
+        render();
+    }
+
+    (async () => {
+        if (!(await initLayout())) return;
+        try {
+            menu = (await api('/v1/menu-categories')).data;
+            await reload();
+        } catch (error) {
+            $('#content').textContent = '';
+            handleError(error);
+        }
+    })();
+</script>
+</body>
+</html>

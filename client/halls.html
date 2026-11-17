@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Залы — Ресторан</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+</head>
+<body>
+<header id="header"></header>
+<main>
+    <h1>Залы и столики</h1>
+    <div id="notice" hidden></div>
+
+    <form id="hall-form" class="card" novalidate>
+        <h2 id="form-title">Новый зал</h2>
+        <div class="filters">
+            <div>
+                <label for="name">Название</label>
+                <input id="name" name="name" required>
+                <small class="field-error" data-for="name"></small>
+            </div>
+            <div>
+                <label for="description">Описание</label>
+                <input id="description" name="description">
+                <small class="field-error" data-for="description"></small>
+            </div>
+            <div>
+                <label><input type="checkbox" name="is_active" checked style="width:auto"> Зал работает</label>
+            </div>
+            <div class="row">
+                <button type="submit">Сохранить</button>
+                <button type="button" id="reset-form" class="secondary">Очистить</button>
+            </div>
+        </div>
+    </form>
+
+    <table>
+        <thead><tr><th>№</th><th>Зал</th><th>Столиков</th><th>Статус</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+    </table>
+
+    <div class="card" id="tables-card" hidden>
+        <h2 id="tables-title"></h2>
+        <table>
+            <thead><tr><th>Столик</th><th>Мест</th><th>Брони на дату</th></tr></thead>
+            <tbody id="table-rows"></tbody>
+        </table>
+        <div class="row" style="margin-top:12px">
+            <label for="occ-date" style="margin:0">Занятость на дату:</label>
+            <input id="occ-date" type="date" style="max-width:180px">
+        </div>
+    </div>
+</main>
+<script>
+    const form = $('#hall-form');
+    let halls = [];
+    let editingId = null;
+    let currentHall = null;
+
+    async function load() {
+        const res = await api('/v1/halls', { query: { per_page: 100 } });
+        halls = res.data;
+        $('#rows').innerHTML = halls.map((h) => `
+            <tr>
+                <td>${h.id}</td>
+                <td><b>${escapeHtml(h.name)}</b><br><span class="muted">${escapeHtml(h.description)}</span></td>
+                <td>${h.tables_count ?? '—'}</td>
+                <td>${h.is_active ? 'Работает' : '<span class="muted">Закрыт</span>'}</td>
+                <td><div class="row">
+                    <button class="small secondary" data-tables="${h.id}">Столики</button>
+                    <button class="small secondary" data-edit="${h.id}">Изменить</button>
+                    <button class="small danger" data-delete="${h.id}">Удалить</button>
+                </div></td>
+            </tr>`).join('');
+
+        document.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => {
+            const hall = halls.find((h) => h.id == b.dataset.edit);
+            editingId = hall.id;
+            form.name.value = hall.name;
+            form.description.value = hall.description ?? '';
+            form.is_active.checked = hall.is_active;
+            $('#form-title').textContent = `Изменить: ${hall.name}`;
+            clearFieldErrors(form);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        document.querySelectorAll('[data-delete]').forEach((b) => b.onclick = async () => {
+            const hall = halls.find((h) => h.id == b.dataset.delete);
+            if (!confirm(`Удалить зал «${hall.name}»?`)) return;
+            try {
+                await api(`/v1/halls/${hall.id}`, { method: 'DELETE' });
+                notify('Зал удалён', 'success');
+                load();
+            } catch (error) { handleError(error); }
+        });
+        document.querySelectorAll('[data-tables]').forEach((b) => b.onclick = () => {
+            currentHall = halls.find((h) => h.id == b.dataset.tables);
+            showOccupancy();
+        });
+    }
+
+    async function showOccupancy() {
+        try {
+            const res = await api(`/v1/halls/${currentHall.id}/occupancy`, { query: { date: $('#occ-date').value } });
+            $('#tables-title').textContent = `${currentHall.name}: столики и брони на ${new Date($('#occ-date').value).toLocaleDateString('ru-RU')}`;
+            $('#table-rows').innerHTML = res.data.map((t) => `
+                <tr>
+                    <td>№${t.number}${t.is_active ? '' : ' <span class="muted">(не работает)</span>'}</td>
+                    <td>${t.seats}</td>
+                    <td>${(t.bookings || []).map((b) =>
+                        `<a href="booking.html?id=${b.id}">${formatDate(b.starts_at).split(', ')[1]}–${formatDate(b.ends_at).split(', ')[1]}</a> ${escapeHtml(b.user?.name)}`
+                    ).join('<br>') || '<span class="muted">свободен</span>'}</td>
+                </tr>`).join('');
+            $('#tables-card').hidden = false;
+        } catch (error) { handleError(error); }
+    }
+
+    function resetForm() {
+        editingId = null;
+        form.reset();
+        clearFieldErrors(form);
+        $('#form-title').textContent = 'Новый зал';
+    }
+
+    $('#reset-form').onclick = resetForm;
+    $('#occ-date').onchange = () => currentHall && showOccupancy();
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearNotice();
+        if (!checkRequired(form)) return;
+        const body = {
+            name: form.name.value.trim(),
+            description: form.description.value || null,
+            is_active: form.is_active.checked,
+        };
+        try {
+            await api(editingId ? `/v1/halls/${editingId}` : '/v1/halls', { method: editingId ? 'PUT' : 'POST', body });
+            notify(editingId ? 'Зал сохранён' : 'Зал создан', 'success');
+            resetForm();
+            load();
+        } catch (error) { handleError(error, form); }
+    });
+
+    (async () => {
+        if (!(await initLayout({ adminOnly: true }))) return;
+        $('#occ-date').value = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+        load();
+    })();
+</script>
+</body>
+</html>
