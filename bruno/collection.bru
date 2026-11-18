@@ -1,0 +1,32 @@
+headers {
+  Accept: application/json
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:pre-request {
+  // даты для запросов: завтра, послезавтра и через неделю
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = (offset) => {
+    const d = new Date(Date.now() + offset * 86400000);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+  bru.setVar("tomorrow", day(1));
+  bru.setVar("in3days", day(3));
+  bru.setVar("in20days", day(20));
+}
+
+docs {
+  # API бронирования столиков
+
+  Все запросы отправляют заголовок `Accept: application/json` и токен `Bearer {{token}}`.
+  Токен сохраняется автоматически после запросов входа и регистрации.
+
+  Тестовые учётки: admin@resto.test / password, client@resto.test / password.
+}

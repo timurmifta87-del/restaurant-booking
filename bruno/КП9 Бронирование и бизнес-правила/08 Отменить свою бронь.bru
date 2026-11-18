@@ -1,0 +1,15 @@
+meta {
+  name: Отменить свою бронь
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings/{{myBookingId}}/cancel
+  body: none
+  auth: inherit
+}
+
+docs {
+  POST /api/v1/bookings/{booking}/cancel. Владелец или администратор. Не позднее чем за 2 часа до начала. Ответ 200.
+}

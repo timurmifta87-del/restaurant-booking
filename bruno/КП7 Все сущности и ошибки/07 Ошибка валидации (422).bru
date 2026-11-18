@@ -1,0 +1,24 @@
+meta {
+  name: Ошибка валидации (422)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/halls
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "",
+    "is_active": "да"
+  }
+}
+
+docs {
+  Пустое имя и неверный is_active — 422:
+
+  `{ "message": "Ошибка валидации", "errors": { "name": [...], "is_active": [...] } }`
+}

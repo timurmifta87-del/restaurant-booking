@@ -1,0 +1,15 @@
+meta {
+  name: Отмена чужой брони (403)
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings/{{foreignBookingId}}/cancel
+  body: none
+  auth: inherit
+}
+
+docs {
+  Gate::authorize('update', $booking) — 403.
+}

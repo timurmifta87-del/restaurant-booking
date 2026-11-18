@@ -1,0 +1,21 @@
+meta {
+  name: Клиент создаёт зал (403)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/halls
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Зал клиента"
+  }
+}
+
+docs {
+  Действие администратора под клиентом: middleware role:admin — 403 «Недостаточно прав».
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Подтвердить отменённую (409)
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/v1/bookings/{{myBookingId}}/status
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "status": "confirmed"
+  }
+}
+
+docs {
+  PATCH /api/v1/bookings/{booking}/status. Доступ: администратор. Допустимые переходы описаны в BookingStatus — 409.
+}

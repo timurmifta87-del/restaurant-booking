@@ -1,0 +1,22 @@
+meta {
+  name: Изменить зал
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/v1/halls/{{hallId}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Банкетный зал (обновлён)",
+    "is_active": false
+  }
+}
+
+docs {
+  PUT /api/v1/halls/{hall}. Доступ: администратор. Ответ 200. Ошибки: 403, 404, 422.
+}

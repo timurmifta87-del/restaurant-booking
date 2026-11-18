@@ -1,0 +1,17 @@
+meta {
+  name: Список залов
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/halls
+  body: none
+  auth: none
+}
+
+docs {
+  GET /api/v1/halls — список залов с количеством столиков.
+
+  Доступ: все. Параметр: is_active. Ответ 200: `data`, `links`, `meta`.
+}

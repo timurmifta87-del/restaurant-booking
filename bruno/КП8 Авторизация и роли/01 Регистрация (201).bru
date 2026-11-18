@@ -1,0 +1,33 @@
+meta {
+  name: Регистрация (201)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Новый Гость",
+    "email": "guest{{$timestamp}}@resto.test",
+    "phone": "+7 900 000-00-00",
+    "password": "secret123",
+    "password_confirmation": "secret123"
+  }
+}
+
+script:post-response {
+  if (res.body.token) {
+    bru.setVar("token", res.body.token);
+  }
+}
+
+docs {
+  POST /api/register. Доступ: гость. Роль по умолчанию client. Ответ 201: `{ user, token }`, пароля в ответе нет.
+
+  Ошибки 422: email занят, пароль короче 8 символов, пароли не совпадают.
+}

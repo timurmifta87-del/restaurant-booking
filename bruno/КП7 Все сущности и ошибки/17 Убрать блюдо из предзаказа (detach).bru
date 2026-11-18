@@ -1,0 +1,15 @@
+meta {
+  name: Убрать блюдо из предзаказа (detach)
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{baseUrl}}/v1/bookings/{{bookingId}}/dishes/1
+  body: none
+  auth: inherit
+}
+
+docs {
+  DELETE /api/v1/bookings/{booking}/dishes/{dish}. detach. Ответ 204.
+}

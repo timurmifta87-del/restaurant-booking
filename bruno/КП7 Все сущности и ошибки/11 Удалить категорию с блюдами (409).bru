@@ -1,0 +1,15 @@
+meta {
+  name: Удалить категорию с блюдами (409)
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/v1/menu-categories/1
+  body: none
+  auth: inherit
+}
+
+docs {
+  Нельзя удалить категорию, в которой есть блюда — 409.
+}

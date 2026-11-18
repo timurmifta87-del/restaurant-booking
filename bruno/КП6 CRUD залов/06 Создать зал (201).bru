@@ -1,0 +1,33 @@
+meta {
+  name: Создать зал (201)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/v1/halls
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Банкетный зал",
+    "description": "Зал для банкетов на 40 гостей",
+    "is_active": true
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("hallId", res.body.data.id);
+  }
+}
+
+docs {
+  POST /api/v1/halls. Доступ: администратор.
+
+  Тело: name (обязательно, уникально), description, is_active.
+
+  Ответ 201 с созданным залом. Ошибки: 401, 403, 422.
+}

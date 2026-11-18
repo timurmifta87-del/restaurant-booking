@@ -1,0 +1,15 @@
+meta {
+  name: Брони клиента (только свои)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/v1/bookings
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/bookings. Клиент видит только свои брони, администратор — все.
+}

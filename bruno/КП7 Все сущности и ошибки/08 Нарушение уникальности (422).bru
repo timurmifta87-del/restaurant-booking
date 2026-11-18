@@ -1,0 +1,21 @@
+meta {
+  name: Нарушение уникальности (422)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/v1/halls
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Основной зал"
+  }
+}
+
+docs {
+  Зал с таким названием уже есть — 422, ошибка в поле name.
+}

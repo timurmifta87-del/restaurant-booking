@@ -1,0 +1,15 @@
+meta {
+  name: Блюда с категориями
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/dishes
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/dishes. Доступ: все. Параметры: menu_category_id, search, is_available, sort (name, price), direction, per_page.
+}

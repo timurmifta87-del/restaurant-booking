@@ -1,0 +1,30 @@
+meta {
+  name: Вход клиента
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "client@resto.test",
+    "password": "password"
+  }
+}
+
+script:post-response {
+  if (res.body.token) {
+    bru.setVar("token", res.body.token);
+  }
+}
+
+docs {
+  Вход под client@resto.test. Токен сохраняется в переменную token.
+
+  Ответ 200: `{ user, token }`.
+}

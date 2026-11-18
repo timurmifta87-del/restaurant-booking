@@ -1,0 +1,24 @@
+meta {
+  name: Столик занят (409)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "table_id": 3,
+    "starts_at": "{{in3days}} 20:00:00",
+    "ends_at": "{{in3days}} 22:00:00",
+    "guests_count": 2
+  }
+}
+
+docs {
+  Правило 1: время пересекается с активной бронью — 409 «Столик уже занят на выбранное время.»
+}

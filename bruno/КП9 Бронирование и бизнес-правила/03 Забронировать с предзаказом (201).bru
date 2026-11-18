@@ -1,0 +1,45 @@
+meta {
+  name: Забронировать с предзаказом (201)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "table_id": 3,
+    "starts_at": "{{in3days}} 19:00:00",
+    "ends_at": "{{in3days}} 21:00:00",
+    "guests_count": 4,
+    "comment": "День рождения",
+    "dishes": [
+      {
+        "dish_id": 1,
+        "quantity": 2
+      },
+      {
+        "dish_id": 5,
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("myBookingId", res.body.data.id);
+  }
+}
+
+docs {
+  POST /api/v1/bookings. Доступ: вошедший пользователь.
+
+  Тело: table_id, starts_at, ends_at, guests_count, comment, dishes[{dish_id, quantity}].
+
+  Выполняется в DB::transaction с lockForUpdate. Ответ 201. Ошибки: 409 (бизнес-правила), 422.
+}

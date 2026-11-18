@@ -1,0 +1,15 @@
+meta {
+  name: Категории меню с блюдами
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/menu-categories
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/menu-categories. Доступ: все. Категории с доступными блюдами (with + whenLoaded).
+}

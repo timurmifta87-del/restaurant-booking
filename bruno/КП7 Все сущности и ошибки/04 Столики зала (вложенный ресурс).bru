@@ -1,0 +1,15 @@
+meta {
+  name: Столики зала (вложенный ресурс)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/v1/halls/1/tables
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/halls/{hall}/tables. Доступ: все.
+}

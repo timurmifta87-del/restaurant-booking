@@ -1,0 +1,15 @@
+meta {
+  name: Текущий пользователь
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/user
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/user. Доступ: вошедший пользователь. Ответ 200: UserResource.
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Неверный токен (401)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/user
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: 123abc
+}
+
+docs {
+  Несуществующий токен — 401.
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Проверка API
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+docs {
+  Доступ: все. Проверка работы API и подключения к БД.
+
+  Ответ 200: `{ app, time, database: "ok" }`, 503 если БД недоступна.
+}

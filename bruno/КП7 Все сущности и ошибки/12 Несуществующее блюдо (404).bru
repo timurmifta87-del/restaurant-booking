@@ -1,0 +1,15 @@
+meta {
+  name: Несуществующее блюдо (404)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/v1/dishes/999
+  body: none
+  auth: inherit
+}
+
+docs {
+  404 «Блюдо не найдено».
+}

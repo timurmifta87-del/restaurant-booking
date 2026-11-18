@@ -1,0 +1,15 @@
+meta {
+  name: Отменить ещё раз (409)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings/{{myBookingId}}/cancel
+  body: none
+  auth: inherit
+}
+
+docs {
+  Правило 7: из статуса «Отменена» перейти никуда нельзя — 409.
+}

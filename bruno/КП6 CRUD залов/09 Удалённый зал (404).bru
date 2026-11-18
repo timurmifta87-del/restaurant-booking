@@ -1,0 +1,15 @@
+meta {
+  name: Удалённый зал (404)
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/v1/halls/{{hallId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  Повторное удаление того же зала — 404 «Зал не найден».
+}

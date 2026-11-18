@@ -1,0 +1,21 @@
+meta {
+  name: Клиент меняет статус брони (403)
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/v1/bookings/1/status
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "status": "confirmed"
+  }
+}
+
+docs {
+  Менять статус может только администратор — 403.
+}

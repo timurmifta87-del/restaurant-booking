@@ -1,0 +1,22 @@
+meta {
+  name: То же блюдо ещё раз (409)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings/{{bookingId}}/dishes
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "dish_id": 1,
+    "quantity": 1
+  }
+}
+
+docs {
+  Блюдо уже есть в предзаказе — 409.
+}

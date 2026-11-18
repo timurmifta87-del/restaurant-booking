@@ -1,0 +1,22 @@
+meta {
+  name: Добавить блюдо в предзаказ (attach)
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings/{{bookingId}}/dishes
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "dish_id": 1,
+    "quantity": 2
+  }
+}
+
+docs {
+  POST /api/v1/bookings/{booking}/dishes. Связь booking_dish, attach. Ответ 201. Повторное добавление — 409.
+}

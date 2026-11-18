@@ -1,0 +1,21 @@
+meta {
+  name: Подтвердить новую бронь
+  type: http
+  seq: 12
+}
+
+patch {
+  url: {{baseUrl}}/v1/bookings/1/status
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "status": "confirmed"
+  }
+}
+
+docs {
+  Новая → подтверждена: 200. Если бронь 1 уже не новая — 409 с пояснением.
+}

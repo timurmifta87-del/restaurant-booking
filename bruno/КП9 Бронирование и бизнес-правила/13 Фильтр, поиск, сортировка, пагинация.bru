@@ -1,0 +1,17 @@
+meta {
+  name: Фильтр, поиск, сортировка, пагинация
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/v1/bookings?status=new&date_from={{tomorrow}}&sort=guests_count&order=desc&per_page=3&page=1
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/bookings. Параметры (BookingFilterRequest): status, hall_id, date_from, date_to, search, sort (starts_at, guests_count, created_at, id), order, per_page, page.
+
+  Ответ: data, links (с сохранёнными параметрами), meta (current_page, last_page, per_page, total).
+}

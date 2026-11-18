@@ -1,0 +1,22 @@
+meta {
+  name: Неверный пароль (401)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "admin@resto.test",
+    "password": "wrong"
+  }
+}
+
+docs {
+  401 «Неверный email или пароль» — без уточнения, что именно неверно.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Удалить зал (204)
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/v1/halls/{{hallId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  DELETE /api/v1/halls/{hall}. Доступ: администратор. Ответ 204 без тела. Ошибки: 403, 404, 409 если в зале есть столики.
+}

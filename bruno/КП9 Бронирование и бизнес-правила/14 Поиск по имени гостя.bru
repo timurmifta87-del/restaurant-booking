@@ -1,0 +1,15 @@
+meta {
+  name: Поиск по имени гостя
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/v1/bookings?search=Тестовый&per_page=5
+  body: none
+  auth: inherit
+}
+
+docs {
+  Поиск по части текста: имя или email гостя, комментарий (like).
+}

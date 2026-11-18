@@ -1,0 +1,23 @@
+meta {
+  name: Несуществующая связь (422)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/v1/tables
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "hall_id": 999,
+    "number": 1,
+    "seats": 4
+  }
+}
+
+docs {
+  Правило exists:halls,id — 422, ошибка в поле hall_id.
+}

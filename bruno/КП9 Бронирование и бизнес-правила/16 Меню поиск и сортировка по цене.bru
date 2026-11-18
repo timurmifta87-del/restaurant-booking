@@ -1,0 +1,15 @@
+meta {
+  name: Меню: поиск и сортировка по цене
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/v1/dishes?search=а&sort=price&direction=desc&per_page=5
+  body: none
+  auth: inherit
+}
+
+docs {
+  Фильтрация и сортировка блюд.
+}

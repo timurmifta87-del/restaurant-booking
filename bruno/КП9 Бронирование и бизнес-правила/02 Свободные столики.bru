@@ -1,0 +1,17 @@
+meta {
+  name: Свободные столики
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/tables/available?starts_at={{in3days}} 19:00:00&ends_at={{in3days}} 21:00:00&guests_count=4
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/tables/available. Доступ: все. Параметры: starts_at, ends_at, guests_count, hall_id.
+
+  Возвращает работающие столики нужной вместимости без пересекающихся броней.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Один зал
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/halls/1
+  body: none
+  auth: none
+}
+
+docs {
+  GET /api/v1/halls/{hall}. Доступ: все. Ответ 200, ошибка 404 «Зал не найден».
+}

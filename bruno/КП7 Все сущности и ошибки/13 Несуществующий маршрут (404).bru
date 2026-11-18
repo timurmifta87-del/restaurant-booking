@@ -1,0 +1,15 @@
+meta {
+  name: Несуществующий маршрут (404)
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/v1/unknown
+  body: none
+  auth: inherit
+}
+
+docs {
+  404 «Маршрут не найден».
+}

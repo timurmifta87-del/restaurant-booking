@@ -1,0 +1,15 @@
+meta {
+  name: Удалить зал со столиками (409)
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/v1/halls/1
+  body: none
+  auth: inherit
+}
+
+docs {
+  Нельзя удалить зал, на который ссылаются столики — 409 с пояснением.
+}

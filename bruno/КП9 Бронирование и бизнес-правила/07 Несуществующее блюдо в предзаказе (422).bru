@@ -1,0 +1,30 @@
+meta {
+  name: Несуществующее блюдо в предзаказе (422)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/bookings
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "table_id": 2,
+    "starts_at": "{{in20days}} 12:00:00",
+    "ends_at": "{{in20days}} 14:00:00",
+    "guests_count": 2,
+    "dishes": [
+      {
+        "dish_id": 999,
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+docs {
+  Блюда нет — 422 (exists). Если блюдо выключено в меню — 409, и бронь не сохраняется: транзакция откатывается.
+}

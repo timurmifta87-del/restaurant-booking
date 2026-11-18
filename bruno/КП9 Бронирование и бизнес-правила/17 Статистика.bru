@@ -1,0 +1,17 @@
+meta {
+  name: Статистика
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/v1/stats?date_from={{tomorrow}}&date_to={{in20days}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  GET /api/v1/stats. Доступ: администратор.
+
+  Количество броней по статусам (groupBy), загрузка залов (withCount), популярные блюда и сумма предзаказов (sum, selectRaw).
+}

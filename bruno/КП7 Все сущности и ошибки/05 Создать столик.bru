@@ -1,0 +1,29 @@
+meta {
+  name: Создать столик
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/v1/tables
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "hall_id": 1,
+    "number": 30,
+    "seats": 4
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("tableId", res.body.data.id);
+  }
+}
+
+docs {
+  POST /api/v1/tables. Доступ: администратор. Тело: hall_id (exists), number (уникален в зале), seats. Ответ 201.
+}

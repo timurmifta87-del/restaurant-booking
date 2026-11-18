@@ -1,0 +1,15 @@
+meta {
+  name: Несуществующий зал (404)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/v1/halls/999
+  body: none
+  auth: none
+}
+
+docs {
+  Route Model Binding: записи нет — 404 `{ "message": "Зал не найден" }`.
+}

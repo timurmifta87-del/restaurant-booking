@@ -1,0 +1,22 @@
+meta {
+  name: Все брони (администратор)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/v1/bookings
+  body: none
+  auth: inherit
+}
+
+script:post-response {
+  const foreign = res.body.data.find((b) => b.user && b.user.email !== "client@resto.test");
+  if (foreign) {
+    bru.setVar("foreignBookingId", foreign.id);
+  }
+}
+
+docs {
+  Администратор видит брони всех пользователей. Скрипт запоминает id чужой для клиента брони.
+}

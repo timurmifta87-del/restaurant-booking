@@ -1,0 +1,15 @@
+meta {
+  name: Выход
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/logout
+  body: none
+  auth: inherit
+}
+
+docs {
+  POST /api/logout — удаляет текущий токен. Ответ 200.
+}
